@@ -13,7 +13,7 @@ int main(void) {
         uint8_t data[8];
         uint8_t len;
         
-        if (can_receive(&id, &data, &len)) {
+        if (can_receive(&id, data, &len)) {
             led_toggle();
         }
     }
