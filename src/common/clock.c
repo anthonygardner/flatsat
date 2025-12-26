@@ -19,7 +19,7 @@ void clock_init(void) {
     // Configure PLL
     RCC->PLLCFGR = (8 << 0)
                  | (192 << 6)
-                 | (0b000 << 16)
+                 | (0b00 << 16)
                  | (1 << 22);
 
     // Set APB1 prescaler (APB1 = HCLK / 2 = 48 MHz)
