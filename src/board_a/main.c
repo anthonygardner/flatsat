@@ -5,8 +5,14 @@
 #include "stm32f767xx.h"
 
 int main(void) {
+    // "I'm alive" sanity check
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+    GPIOB->MODER |= (1 << 0);
+    GPIOB->ODR |= (1 << 0);
+
     clock_init();
     led_init();
+    uart_init();
     can_init();
     eth_init();
     
