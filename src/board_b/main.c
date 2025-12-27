@@ -1,13 +1,34 @@
 #include "can.h"
 #include "clock.h"
+#include "eth.h"
 #include "gpio.h"
+#include "uart.h"
 #include "stm32f767xx.h"
 
 int main(void) {
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+    GPIOB->MODER |= (1 << 14);
+
+    GPIOB->ODR |= (1 << 7); // on
+    GPIOB->ODR &= ~(1 << 7); // off
     clock_init();
-    led_init();
-    can_init();
     
+    GPIOB->ODR |= (1 << 7); // on
+    GPIOB->ODR &= ~(1 << 7); // off
+    led_init();
+
+    uart_init();
+    GPIOB->ODR |= (1 << 7); // on
+    GPIOB->ODR &= ~(1 << 7); // off
+
+    can_init();
+    GPIOB->ODR |= (1 << 7); // on
+    GPIOB->ODR &= ~(1 << 7); // off
+
+    eth_init();
+    GPIOB->ODR |= (1 << 7); // on
+    GPIOB->ODR &= ~(1 << 7); // off
+
     while (1) {
         uint32_t id;
         uint8_t data[8];
@@ -16,5 +37,8 @@ int main(void) {
         if (can_receive(&id, data, &len)) {
             led_toggle();
         }
+
+        GPIOB->ODR |= (1 << 7); // on
+        GPIOB->ODR &= ~(1 << 7); // off
     }
 }
