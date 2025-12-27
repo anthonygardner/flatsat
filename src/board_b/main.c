@@ -10,24 +10,18 @@ int main(void) {
     GPIOB->MODER |= (1 << 14);
 
     GPIOB->ODR |= (1 << 7); // on
-    GPIOB->ODR &= ~(1 << 7); // off
     clock_init();
-    
-    GPIOB->ODR |= (1 << 7); // on
     GPIOB->ODR &= ~(1 << 7); // off
-    led_init();
 
+    led_init();
     uart_init();
     GPIOB->ODR |= (1 << 7); // on
-    GPIOB->ODR &= ~(1 << 7); // off
 
     can_init();
-    GPIOB->ODR |= (1 << 7); // on
     GPIOB->ODR &= ~(1 << 7); // off
 
     eth_init();
     GPIOB->ODR |= (1 << 7); // on
-    GPIOB->ODR &= ~(1 << 7); // off
 
     while (1) {
         uint32_t id;
@@ -38,7 +32,6 @@ int main(void) {
             led_toggle();
         }
 
-        GPIOB->ODR |= (1 << 7); // on
         GPIOB->ODR &= ~(1 << 7); // off
     }
 }
