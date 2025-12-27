@@ -6,8 +6,9 @@
 #include "stm32f767xx.h"
 
 int main(void) {
+    // Setup LEDs
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    GPIOB->MODER |= (1 << 7) | (1 << 14);
+    GPIOB->MODER |= (1 << 14) | (1 << 28);
     
     clock_init();
     led_init();
