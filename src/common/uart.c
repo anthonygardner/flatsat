@@ -2,23 +2,22 @@
 #include "stm32f767xx.h"
 
 static void uart_enable_clocks(void) {
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
-    RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+    RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
 };
 
 static void uart_configure_pins(void) {
-    // PD8: TX
-    GPIOD->MODER &= ~(0b11 << 16);
-    GPIOD->MODER |= (0b10 << 16);
-    GPIOD->OSPEEDR |= (0b10 << 16);
-    GPIOD->AFR[1] |= (7 << 0);
+    // PC6: TX
+    GPIOC->MODER &= ~(0b11 << 12);
+    GPIOC->MODER |= (0b10 << 12);
+    GPIOC->OSPEEDR |= (0b10 << 12);
+    GPIOC->AFR[1] |= (8 << 24); // AF8 for USART6
 };
 
 void uart_send_char(char c) {
     // Wait for TXE
-    while (!(USART3->ISR & (1 << 7)));
-
-    USART3->TDR = c;
+    while (!(USART6->ISR & (1 << 7)));
+    USART6->TDR = c;
 };
 
 void uart_print_hex(uint32_t val) {
@@ -37,11 +36,8 @@ void uart_init(void) {
     uart_configure_pins();
 
     // Configure baud rate
-    USART3->BRR = 833;
+    USART6->BRR = 833;
 
-    // Enable transmitter
-    USART3->CR1 |= (1 << 3);
-
-    // Enable USART
-    USART3->CR1 |= (1 << 13);
+    // Enable transmitter and USART6
+    USART6->CR1 |= (1 << 3) | (1 << 13);
 }
