@@ -17,7 +17,7 @@ int main(void) {
     USART6->BRR = 139;
     
     // Enable TX and USART
-    USART6->CR1 = (1 << 3) | (1 << 13);
+    USART6->CR1 = (1 << 0) | (1 << 3);
     
     // Send 'U' forever
     while (1) {
