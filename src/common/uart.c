@@ -17,7 +17,6 @@ static void uart_configure_pins(void) {
 void uart_send_char(char c) {
     // Wait for TXE
     while (!(USART3->ISR & (1 << 7)));
-
     USART3->TDR = c;
 };
 

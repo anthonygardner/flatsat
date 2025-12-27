@@ -7,9 +7,8 @@
 
 int main(void) {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    GPIOB->MODER |= (1 << 14);
-    GPIOB->ODR |= (1 << 7); // Blue LED on
-
+    GPIOB->MODER |= (1 << 7) | (1 << 14);
+    
     clock_init();
     led_init();
     uart_init();
@@ -22,8 +21,20 @@ int main(void) {
         uint8_t data[8] = {counter++, 0, 0, 0, 0, 0, 0, 0};
         
         can_transmit(0x100, data, 1);
-        
         led_toggle();
+
+        if (eth_get_link_status()) {
+            uart_send_char('U');
+            uart_send_char('P');
+            GPIOB->ODR |= (1 << 7); // Blue LED on
+        } else {
+            uart_send_char('D');
+            uart_send_char('N');
+            GPIOB->ODR |= (1 << 14); // Red LED on
+        }
+        
+        uart_send_char('\r');
+        uart_send_char('\n');
 
         for (volatile int i = 0; i < 500000; i++);
     }
