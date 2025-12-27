@@ -1,28 +1,36 @@
+#include "can.h"
+#include "clock.h"
+#include "eth.h"
+#include "gpio.h"
+#include "uart.h"
 #include "stm32f767xx.h"
 
 int main(void) {
-    // Enable GPIOD clock
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+    GPIOB->MODER |= (1 << 14);
+    GPIOB->ODR |= (1 << 7); // Blue LED on
+
+    clock_init();
+    led_init();
+    uart_init();
+
+    uart_send_char('H');
+    uart_send_char('i');
+    uart_send_char('\r');
+    uart_send_char('\n');
+
+    can_init();
+    eth_init();
     
-    // Enable USART3 clock
-    RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+    uint8_t counter = 0;
     
-    // PD8 as alternate function
-    GPIOD->MODER &= ~(0b11 << 16);
-    GPIOD->MODER |= (0b10 << 16);
-    GPIOD->AFR[1] &= ~(0xF << 0);
-    GPIOD->AFR[1] |= (7 << 0);  // AF7 for USART3
-    
-    // Baud rate for 16 MHz HSI
-    USART3->BRR = 139;
-    
-    // Enable TX and USART
-    USART3->CR1 = (1 << 0) | (1 << 3);
-    
-    // Send 'U' forever
     while (1) {
-        while (!(USART3->ISR & (1 << 7)));
-        USART3->TDR = 'U';
+        uint8_t data[8] = {counter++, 0, 0, 0, 0, 0, 0, 0};
+        
+        can_transmit(0x100, data, 1);
+        
+        led_toggle();
+
         for (volatile int i = 0; i < 500000; i++);
     }
 }
