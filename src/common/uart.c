@@ -10,8 +10,11 @@ static void uart_configure_pins(void) {
     // PC6: TX
     GPIOC->MODER &= ~(0b11 << 12);
     GPIOC->MODER |= (0b10 << 12);
+
     GPIOC->OSPEEDR |= (0b10 << 12);
-    GPIOC->AFR[0] |= (8 << 24); // AF8 for USART6
+
+    GPIOC->AFR[0] &= ~(0xF << 24); // Clear AF bits
+    GPIOC->AFR[0] |= (8 << 24); // Set AF8 for USART6
 };
 
 void uart_send_char(char c) {
