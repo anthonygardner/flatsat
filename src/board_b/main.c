@@ -8,20 +8,19 @@
 int main(void) {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
     GPIOB->MODER |= (1 << 14);
+    GPIOB->ODR |= (1 << 7); // Blue LED on
 
-    GPIOB->ODR |= (1 << 7); // on
     clock_init();
-    GPIOB->ODR &= ~(1 << 7); // off
-
     led_init();
     uart_init();
-    GPIOB->ODR |= (1 << 7); // on
+
+    uart_send_char('H');
+    uart_send_char('i');
+    uart_send_char('\r');
+    uart_send_char('\n');
 
     can_init();
-    GPIOB->ODR &= ~(1 << 7); // off
-
     eth_init();
-    GPIOB->ODR |= (1 << 7); // on
 
     while (1) {
         uint32_t id;
@@ -31,7 +30,5 @@ int main(void) {
         if (can_receive(&id, data, &len)) {
             led_toggle();
         }
-
-        GPIOB->ODR &= ~(1 << 7); // off
     }
 }
