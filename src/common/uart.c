@@ -36,7 +36,7 @@ void uart_init(void) {
     uart_configure_pins();
 
     // Configure baud rate
-    USART6->BRR = 10000;
+    USART6->BRR = 80000;
 
     // Enable transmitter and USART6
     USART6->CR1 |= (1 << 3) | (1 << 13);
