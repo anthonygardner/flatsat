@@ -14,7 +14,7 @@ int main(void) {
     GPIOC->AFR[0] |= (8 << 24);
     
     // Baud rate for 32 MHz HSI
-    USART6->BRR = 278;
+    USART6->BRR = 270;
     
     // Enable TX and USART
     USART6->CR1 = (1 << 0) | (1 << 3);
