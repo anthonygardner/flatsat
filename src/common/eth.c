@@ -145,6 +145,12 @@ static uint32_t eth_read_phy_id(void) {
     return (reg2 << 16) | reg3;
 }
 
+static uint16_t eth_get_link_status(void) {
+    // Read PHY register 1 (Basic Status Register)
+    uint16_t bsr = eth_mdio_read(0, 1);
+    return (bsr & (1 << 2)) != 0;
+}
+
 void eth_init(void) {
     eth_enable_clocks();
     eth_configure_pins();
@@ -152,4 +158,17 @@ void eth_init(void) {
     
     uint32_t phy_id = eth_read_phy_id();
     uart_print_hex(phy_id);
+
+    if (eth_get_link_status()) {
+        uart_send_char('U');
+        uart_send_char('P');
+    } else {
+        uart_send_char('D');
+        uart_send_char('O');
+        uart_send_char('W');
+        uart_send_char('N');
+    }
+    
+    uart_send_char('\r');
+    uart_send_char('\n');
 }

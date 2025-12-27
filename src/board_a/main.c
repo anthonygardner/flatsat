@@ -13,12 +13,6 @@ int main(void) {
     clock_init();
     led_init();
     uart_init();
-
-    uart_send_char('H');
-    uart_send_char('i');
-    uart_send_char('\r');
-    uart_send_char('\n');
-
     can_init();
     eth_init();
     
