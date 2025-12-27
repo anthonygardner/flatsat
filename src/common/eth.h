@@ -5,6 +5,6 @@
 
 void eth_init(void);
 
-uint16_t get_eth_link_status(void);
+uint16_t eth_get_link_status(void);
 
 #endif
