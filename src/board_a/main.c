@@ -28,9 +28,6 @@ int main(void) {
         } else {
             GPIOB->ODR |= (1 << 14); // Red LED on
         }
-        
-        uart_send_char('\r');
-        uart_send_char('\n');
 
         for (volatile int i = 0; i < 500000; i++);
     }
