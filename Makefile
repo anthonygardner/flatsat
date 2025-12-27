@@ -28,10 +28,10 @@ build/board_b/firmware.bin: build/board_b/firmware.elf
 board_b: build/board_b/firmware.bin
 
 flash_a: board_a
-	st-flash write build/board_a/firmware.bin 0x8000000
+	st-flash --serial 066CFF555567894967085254 write build/board_a/firmware.bin 0x8000000
 
 flash_b: board_b
-	st-flash write build/board_b/firmware.bin 0x8000000
+	st-flash --serial 0666FF555567894967085233 write build/board_b/firmware.bin 0x8000000
 
 clean:
 	rm -fr build/
