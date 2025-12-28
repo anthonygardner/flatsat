@@ -38,4 +38,4 @@ bool mpu6050_read_gyro(int16_t* x, int16_t* y, int16_t* z);
 bool mpu_6050_read_temp(int16_t* temp);
 bool mpu6050_read_all(mpu6050_data_t* data);
 
-#endif MPU6050_H
+#endif
