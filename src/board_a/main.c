@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 int main(void) {
+    clock_init();
     uart_init();
     i2c_init();
 
