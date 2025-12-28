@@ -29,7 +29,7 @@ void clock_init(void) {
     RCC->CR |= RCC_CR_PLLON;
     while (!(RCC->CR & RCC_CR_PLLRDY));
 
-    // Switch system clock switch to PLL
+    // Set system clock switch to PLL
     RCC->CFGR |= (0b10 << 0);
 
     // Wait for confirmation from system clock switch status

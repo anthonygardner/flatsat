@@ -15,8 +15,7 @@ static void uart_configure_pins(void) {
 };
 
 void uart_send_char(char c) {
-    // Wait for TXE
-    while (!(USART3->ISR & (1 << 7)));
+    while (!(USART3->ISR & (1 << 7))); // Wait for TXE
     USART3->TDR = c;
 };
 
@@ -31,6 +30,11 @@ void uart_print_hex(uint32_t val) {
     uart_send_char('\n');
 };
 
+char uart_get_char(void) {
+    while (!(USART3->ISR & (1 << 5))); // Wait until RXNE is set
+    return USART3->RDR;
+}
+
 void uart_init(void) {
     uart_enable_clocks();
     uart_configure_pins();
@@ -38,6 +42,6 @@ void uart_init(void) {
     // Configure baud rate (48 MHz / 115200)
     USART3->BRR = 417;
 
-    // Enable transmitter and USART3
-    USART3->CR1 |= (1 << 0) | (1 << 3);
+    // Enable transmitter, receiver, and USART3
+    USART3->CR1 |= (1 << 0) | (1 << 2) | (1 << 3);
 }
