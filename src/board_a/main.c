@@ -13,7 +13,12 @@ int main(void) {
     clock_init();
     uart_init();
     i2c_init();
-    mpu6050_init();
+
+    if (mpu6050_init()) {
+        uart_print_str("MPU6050 OK\r\n");
+    } else {
+        uart_print_str("MPU6050 FAIL\r\n");
+    }
     
     mpu6050_raw_t data;
     

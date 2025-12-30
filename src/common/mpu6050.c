@@ -8,7 +8,7 @@ bool mpu6050_test_connection(void) {
 }
 
 bool mpu6050_init(void) {
-    // Wake up MPU6050
+    // Wake up
     i2c_write_register(MPU6050_ADDR, 0x6B, 0x00);
     return mpu6050_test_connection();
 }
