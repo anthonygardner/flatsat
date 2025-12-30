@@ -16,9 +16,9 @@ int main(void) {
     int count = 0;
     
     while (1) {
-        uart_print_string("COUNT:");
+        uart_print_str("COUNT:");
         uart_print_int(count++);
-        uart_print_string("\r\n");
+        uart_print_str("\r\n");
         
         while (!(USART3->ISR & (1 << 6)));
         
