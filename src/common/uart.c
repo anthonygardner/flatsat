@@ -54,7 +54,7 @@ void uart_print_int(int16_t val) {
     }
 }
 
-void uart_print_string(const char* s) {
+void uart_print_str(const char* s) {
     while (*s) {
         uart_send_char(*s++);
     }
