@@ -29,16 +29,16 @@ int main(void) {
 
     while (1) {
         mpu6050_read_all(&data);
+        
+        uart_print_string("AX:");
+        uart_print_int(data.accel_x);
+        uart_print_string("AX:");
+        uart_print_int(data.accel_y);
+        uart_print_string("AX:");
+        uart_print_int(data.accel_z);
+        uart_print_string("\r\n");
 
-        uart_print_hex(data.accel_x);
-        uart_print_hex(data.accel_y);
-        uart_print_hex(data.accel_z);
-        uart_print_hex(data.temp);
-        uart_print_hex(data.gyro_x);
-        uart_print_hex(data.gyro_y);
-        uart_print_hex(data.gyro_z);
-
-        for (volatile int i = 0; i < 100000; i++);
+        for (volatile int i = 0; i < 500000; i++);
     }
 }
 

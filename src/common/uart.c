@@ -35,6 +35,31 @@ char uart_get_char(void) {
     return USART3->RDR;
 }
 
+void uart_print_int(int16_t val) {
+    char buf[7];
+    int i = 0;
+
+    if (val < 0) {
+        uart_send_char('-');
+        val = -val;
+    }
+
+    do {
+        buf[i++] = '0' + (val % 10);
+        val /= 10;
+    } while (val > 0);
+
+    while (i > 0) {
+        uart_send_char(buf[--i]);
+    }
+}
+
+void uart_print_string(const char* s) {
+    while (*s) {
+        uart_send_char(*s++);
+    }
+}
+
 void uart_init(void) {
     uart_enable_clocks();
     uart_configure_pins();
