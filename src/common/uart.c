@@ -60,6 +60,26 @@ void uart_print_int(int16_t val) {
     }
 }
 
+void uart_print_float(float val, int dec) {
+    if (val < 0) {
+        uart_send_char('-');
+        val = -val;
+    }
+    
+    int whole = (int)val;
+    uart_print_int(whole);
+    uart_send_char('.');
+    
+    // Get decimal portion
+    float frac = val - whole;
+    for (int i = 0; i < dec; i++) {
+        frac *= 10;
+        int digit = (int)frac;
+        uart_send_char('0' + digit);
+        frac -= digit;
+    }
+}
+
 void uart_print_str(const char* s) {
     while (*s) {
         uart_send_char(*s++);

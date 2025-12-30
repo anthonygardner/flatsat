@@ -1,8 +1,6 @@
 #include "i2c.h"
 #include "stm32f767xx.h"
 
-// GOAL: Read register 0x75 on MPU6050 ("WHO_AM_I")
-
 static void i2c_enable_clocks(void) {
     // PB8: SCL, PB9: SDA
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
@@ -38,33 +36,32 @@ static void i2c_configure_peripheral(void) {
 }
 
 uint8_t i2c_read(uint8_t addr, uint8_t* data, uint8_t len) {
-    I2C1->CR2 = 0; // Clear first
-    I2C1->CR2 |= (addr << 1); // Set slave address
-    I2C1->CR2 |= (len << 16); // Set byte count
-    I2C1->CR2 |= (1 << 10); // Set read direction
-    I2C1->CR2 |= (1 << 13); // Trigger START
+    I2C1->CR2 = 0;          // Clear first
+    I2C1->CR2 = (addr << 1) // Set slave address
+              | (len << 16) // Set byte count
+              | (1 << 10)   // Set read direction
+              | (1 << 25)   // AUTOEND: stop after NBYTES
+              | (1 << 13);  // Trigger START
 
     for (int i = 0; i < len; i++) {
-        while (!(I2C1->ISR & (1 << 2)));
+        while (!(I2C1->ISR & (1 << 2))); // Wait for RX
         data[i] = I2C1->RXDR;
     }
 
-    while (!(I2C1->ISR & (1 << 6))); // Wait for transfer to complete
-
-    I2C1->CR2 |= (1 << 14); // Trigger STOP
+    while (I2C1->CR2 & (1 << 13)); // Wait for START to clear
     
     return 0;
 }
 
 uint8_t i2c_write(uint8_t addr, uint8_t* data, uint8_t len) {
-    I2C1->CR2 = 0; // Clear first
-    I2C1->CR2 |= (addr << 1); // Set slave address
-    I2C1->CR2 |= (len << 16); // Set byte count
-    I2C1->CR2 |= (0 << 10); // Set write direction
-    I2C1->CR2 |= (1 << 13); // Trigger START
+    I2C1->CR2 = 0;          // Clear first
+    I2C1->CR2 = (addr << 1) // Set slave address
+              | (len << 16) // Set byte count
+              | (0 << 10)   // Set write direction
+              | (1 << 13);  // Trigger START
 
     for (int i = 0; i < len; i++) {
-        while (!(I2C1->ISR & (1 << 1)));
+        while (!(I2C1->ISR & (1 << 1))); // Wait for TX
         I2C1->TXDR = data[i];
     }
 
@@ -87,7 +84,7 @@ uint8_t i2c_read_register(uint8_t addr, uint8_t reg, uint8_t* value) {
 
 uint8_t i2c_read_registers(uint8_t addr, uint8_t reg, uint8_t* buffer, uint8_t len) {
     i2c_write(addr, &reg, 1);
-    i2c_read(addr, buffer, 1);
+    i2c_read(addr, buffer, len);
     return 0;
 }
 

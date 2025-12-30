@@ -2,6 +2,9 @@
 #include "stm32f767xx.h"
 
 void clock_init(void) {
+    // Handle floating point math with FPU
+    SCB->CPACR |= ((3UL << 20) | (3UL << 22));
+    
     // Enable high speed internal (HSI) oscillator clock, wait for ready
     RCC->CR |= RCC_CR_HSION;
     while (!(RCC->CR & RCC_CR_HSIRDY));

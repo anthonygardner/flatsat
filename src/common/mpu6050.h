@@ -18,7 +18,6 @@ typedef struct {
     int16_t gyro_z;
 } mpu6050_raw_t;
 
-// TODO(acg): Convert raw bits to sensible units
 typedef struct {
     float accel_x;
     float accel_y;
@@ -33,9 +32,15 @@ bool mpu6050_init(void);
 
 bool mpu6050_test_connection(void);
 
-bool mpu6050_read_accel(int16_t* x, int16_t* y, int16_t* z);
-bool mpu6050_read_gyro(int16_t* x, int16_t* y, int16_t* z);
-bool mpu_6050_read_temp(int16_t* temp);
-bool mpu6050_read_all(mpu6050_raw_t* data);
+bool mpu6050_read_accel_raw(int16_t* x, int16_t* y, int16_t* z);
+bool mpu6050_read_gyro_raw(int16_t* x, int16_t* y, int16_t* z);
+bool mpu_6050_read_temp_raw(int16_t* temp);
+bool mpu6050_read_all_raw(mpu6050_raw_t* data);
+
+// TODO...
+// bool mpu6050_read_accel(int16_t* x, int16_t* y, int16_t* z);
+// bool mpu6050_read_gyro(int16_t* x, int16_t* y, int16_t* z);
+// bool mpu_6050_read_temp(int16_t* temp);
+bool mpu6050_read_all(mpu6050_data_t* data);
 
 #endif

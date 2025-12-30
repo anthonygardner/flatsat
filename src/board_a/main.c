@@ -20,19 +20,25 @@ int main(void) {
         uart_print_str("MPU6050 FAIL\r\n");
     }
     
-    mpu6050_raw_t data;
+    mpu6050_data_t data;
     
     while (1) {
         mpu6050_read_all(&data);
         
-        // uart_print_str("AX:");
-        // uart_print_int(data.accel_x);
-        // uart_print_str(" AY:");
-        // uart_print_int(data.accel_y);
-        // uart_print_str(" AZ:");
-        // uart_print_int(data.accel_z);
-        // uart_print_str("\r\n");
-        // uart_print_str("\r\n");
+        uart_print_float(data.accel_x, 2);
+        uart_send_char(',');
+        uart_print_float(data.accel_y, 2);
+        uart_send_char(',');
+        uart_print_float(data.accel_z, 2);
+        uart_send_char(',');
+        uart_print_float(data.temp, 2);
+        uart_send_char(',');
+        uart_print_float(data.gyro_x, 2);
+        uart_send_char(',');
+        uart_print_float(data.gyro_y, 2);
+        uart_send_char(',');
+        uart_print_float(data.gyro_z, 2);
+        uart_print_str("\r\n");
         
         for (volatile int i = 0; i < 2000000; i++);
     }

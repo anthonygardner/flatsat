@@ -8,12 +8,17 @@ bool mpu6050_test_connection(void) {
 }
 
 bool mpu6050_init(void) {
+    // Reset
+    i2c_write_register(MPU6050_ADDR, 0x6B, 0x80);
+    for (volatile int i = 0; i < 1000000; i++);
+
     // Wake up
     i2c_write_register(MPU6050_ADDR, 0x6B, 0x00);
+
     return mpu6050_test_connection();
 }
 
-bool mpu6050_read_accel(int16_t* accel_x, int16_t* accel_y, int16_t* accel_z) {
+bool mpu6050_read_accel_raw(int16_t* accel_x, int16_t* accel_y, int16_t* accel_z) {
     // 3B, 3C, 3D, 3E, 3F, 40 = ACCEL_X/Y/ZOUT_H/L
     uint8_t buffer[6];
 
@@ -26,7 +31,20 @@ bool mpu6050_read_accel(int16_t* accel_x, int16_t* accel_y, int16_t* accel_z) {
     return true;
 }
 
-bool mpu_6050_read_temp(int16_t* temp) {
+bool mpu6050_read_accel(int16_t* accel_x, int16_t* accel_y, int16_t* accel_z) {
+    // 3B, 3C, 3D, 3E, 3F, 40 = ACCEL_X/Y/ZOUT_H/L
+    uint8_t buffer[6];
+
+    i2c_read_registers(MPU6050_ADDR, 0x43, buffer, 6);
+
+    *accel_x = (int16_t)((buffer[0] << 8) | buffer[1]) / 16384.0;
+    *accel_y = (int16_t)((buffer[2] << 8) | buffer[3]) / 16384.0;
+    *accel_z = (int16_t)((buffer[4] << 8) | buffer[5]) / 16384.0;
+
+    return true;
+}
+
+bool mpu_6050_read_temp_raw(int16_t* temp) {
     // 41, 42 = TEMP_OUT_H/L
     uint8_t buffer[2];
 
@@ -37,7 +55,18 @@ bool mpu_6050_read_temp(int16_t* temp) {
     return true;
 }
 
-bool mpu6050_read_gyro(int16_t* gyro_x, int16_t* gyro_y, int16_t* gyro_z) {
+bool mpu6050_read_temp(int16_t* temp) {
+    // 41, 42 = TEMP_OUT_H/L
+    uint8_t buffer[2];
+
+    i2c_read_registers(MPU6050_ADDR, 0x41, buffer, 2);
+
+    *temp = (int16_t)((buffer[0] << 8) | buffer[1]) / 340.0 + 36.53;
+
+    return true;
+}
+
+bool mpu6050_read_gyro_raw(int16_t* gyro_x, int16_t* gyro_y, int16_t* gyro_z) {
     // 43, 44, 45, 46, 47, 48 = GYRO_X/Y/ZOUT_H/L
     uint8_t buffer[6];
 
@@ -50,7 +79,20 @@ bool mpu6050_read_gyro(int16_t* gyro_x, int16_t* gyro_y, int16_t* gyro_z) {
     return true;
 }
 
-bool mpu6050_read_all(mpu6050_raw_t* data) {
+bool mpu6050_read_gyro(int16_t* gyro_x, int16_t* gyro_y, int16_t* gyro_z) {
+    // 43, 44, 45, 46, 47, 48 = GYRO_X/Y/ZOUT_H/L
+    uint8_t buffer[6];
+
+    i2c_read_registers(MPU6050_ADDR, 0x43, buffer, 6);
+
+    *gyro_x = (int16_t)((buffer[0] << 8) | buffer[1]) / 131.0;
+    *gyro_y = (int16_t)((buffer[2] << 8) | buffer[3]) / 131.0;
+    *gyro_z = (int16_t)((buffer[4] << 8) | buffer[5]) / 131.0;
+
+    return true;
+}
+
+bool mpu6050_read_all_raw(mpu6050_raw_t* data) {
     uint8_t buffer[14];
 
     i2c_read_registers(MPU6050_ADDR, 0x3B, buffer, 14);
@@ -62,6 +104,22 @@ bool mpu6050_read_all(mpu6050_raw_t* data) {
     data->gyro_x = (buffer[8] << 8) | buffer[9];
     data->gyro_y = (buffer[10] << 8) | buffer[11];
     data->gyro_z = (buffer[12] << 8) | buffer[13];
+
+    return true;
+}
+
+bool mpu6050_read_all(mpu6050_data_t* data) {
+    uint8_t buffer[14];
+
+    i2c_read_registers(MPU6050_ADDR, 0x3B, buffer, 14);
+
+    data->accel_x = (int16_t)((buffer[0] << 8) | buffer[1]) / 16384.0;
+    data->accel_y = (int16_t)((buffer[2] << 8) | buffer[3]) / 16384.0;
+    data->accel_z = (int16_t)((buffer[4] << 8) | buffer[5]) / 16384.0;
+    data->temp = (int16_t)((buffer[6] << 8) | buffer[7]) / 340.0 + 36.53;
+    data->gyro_x = (int16_t)((buffer[8] << 8) | buffer[9]) / 131.0;
+    data->gyro_y = (int16_t)((buffer[10] << 8) | buffer[11]) / 131.0;
+    data->gyro_z = (int16_t)((buffer[12] << 8) | buffer[13]) / 131.0;
 
     return true;
 }
