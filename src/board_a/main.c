@@ -13,6 +13,7 @@ int main(void) {
     clock_init();
     uart_init();
     i2c_init();
+    mpu6050_init();
 
     if (mpu6050_test_connection()) {
         uart_send_char('Y');
@@ -24,7 +25,21 @@ int main(void) {
         uart_send_char('N');
     }
 
-    while (1);
+    mpu6050_raw_t data;
+
+    while (1) {
+        mpu6050_read_all(&data);
+
+        uart_print_hex(data.accel_x);
+        uart_print_hex(data.accel_y);
+        uart_print_hex(data.accel_z);
+        uart_print_hex(data.temp);
+        uart_print_hex(data.gyro_x);
+        uart_print_hex(data.gyro_y);
+        uart_print_hex(data.gyro_z);
+
+        for (volatile int i = 0; i < 100000; i++);
+    }
 }
 
 // int main(void) {
