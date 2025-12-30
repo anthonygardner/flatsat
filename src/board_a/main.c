@@ -30,28 +30,19 @@ int main(void) {
     while (1) {
         // mpu6050_read_all(&data);
         
-        // uart_print_str("AX:");
-        // uart_print_int(data.accel_x);
+        uart_print_str("AX:");
+        uart_print_int(data.accel_x);
         // uart_print_str(" AY:");
         // uart_print_int(data.accel_y);
         // uart_print_str(" AZ:");
         // uart_print_int(data.accel_z);
-        // uart_print_str("\r\n");
-        // uart_print_str("\r\n");
+        uart_print_str("\r\n");
+        uart_print_str("\r\n");
 
-        // // Wait for transmission to complete
-        // while (!(USART3->ISR & (1 << 6)));
+        // Wait for transmission to complete
+        while (!(USART3->ISR & (1 << 6)));
 
-        uint8_t buffer[14];
-        i2c_read_registers(MPU6050_ADDR, 0x3B, buffer, 14);
-        
-        for (int i = 0; i < 14; i++) {
-            uart_print_hex8(buffer[i]);
-            uart_send_char(' ');
-        }
-        uart_print_string("\r\n");
-
-        for (volatile int i = 0; i < 1000000; i++);
+        for (volatile int i = 0; i < 5000000; i++);
     }
 }
 
