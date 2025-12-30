@@ -30,14 +30,14 @@ int main(void) {
     while (1) {
         mpu6050_read_all(&data);
         
-        uart_print_string("AX:");
+        uart_print_str("AX:");
         uart_print_int(data.accel_x);
-        uart_print_string(" AY:");
+        uart_print_str(" AY:");
         uart_print_int(data.accel_y);
-        uart_print_string(" AZ:");
+        uart_print_str(" AZ:");
         uart_print_int(data.accel_z);
-        uart_print_string("\r\n");
-        uart_print_string("\r\n");
+        uart_print_str("\r\n");
+        uart_print_str("\r\n");
 
         for (volatile int i = 0; i < 500000; i++);
     }
