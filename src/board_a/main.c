@@ -12,36 +12,16 @@
 int main(void) {
     clock_init();
     uart_init();
-    i2c_init();
-    mpu6050_init();
-
-    if (mpu6050_test_connection()) {
-        uart_send_char('Y');
-
-        uint8_t who;
-        i2c_read_register(MPU6050_ADDR, 0x75, &who);
-        uart_print_hex(who);
-    } else {
-        uart_send_char('N');
-    }
-
-    mpu6050_raw_t data;
-
+    
+    int count = 0;
+    
     while (1) {
-        // mpu6050_read_all(&data);
+        uart_print_string("COUNT:");
+        uart_print_int(count++);
+        uart_print_string("\r\n");
         
-        uart_print_str("AX:");
-        uart_print_int(data.accel_x);
-        // uart_print_str(" AY:");
-        // uart_print_int(data.accel_y);
-        // uart_print_str(" AZ:");
-        // uart_print_int(data.accel_z);
-        uart_print_str("\r\n");
-        uart_print_str("\r\n");
-
-        // Wait for transmission to complete
         while (!(USART3->ISR & (1 << 6)));
-
+        
         for (volatile int i = 0; i < 5000000; i++);
     }
 }
