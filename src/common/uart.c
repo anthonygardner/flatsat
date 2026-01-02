@@ -60,6 +60,20 @@ void uart_print_int(int16_t val) {
     }
 }
 
+void uart_print_uint32(uint32_t val) {
+    char buf[11];
+    uint8_t i = 0;
+
+    do {
+        buf[i++] = '0' + (val % 10);
+        val /= 10;
+    } while (val > 0);
+
+    while (i > 0) {
+        uart_send_char(buf[--i]);
+    }
+}
+
 void uart_print_float(float val, int dec) {
     if (val < 0) {
         uart_send_char('-');

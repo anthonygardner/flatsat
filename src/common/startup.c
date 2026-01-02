@@ -8,6 +8,7 @@ extern uint32_t _ebss;
 extern uint32_t _estack;
 
 extern int main(void);
+extern void SysTick_Handler(void);
 
 void Reset_Handler(void);
 void Default_Handler(void);
@@ -47,5 +48,5 @@ void (*vectors[])(void) = {
     Default_Handler,  // Debug
     0,
     Default_Handler,  // PendSV
-    Default_Handler,  // SysTick
+    SysTick_Handler,  // SysTick
 };

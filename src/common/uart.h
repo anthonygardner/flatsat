@@ -15,6 +15,8 @@ char uart_get_char(void);
 
 void uart_print_int(int16_t val);
 
+void uart_print_uint32(uint32_t val);
+
 void uart_print_float(float val, int dec);
 
 void uart_print_str(const char* s);
