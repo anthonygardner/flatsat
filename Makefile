@@ -48,4 +48,4 @@ flash_pms: pms
 clean:
 	rm -fr build/
 
-.PHONY: obc adcs flash_obc flash_adcs flash_pms clean
+.PHONY: obc adcs pms flash_obc flash_adcs flash_pms clean
