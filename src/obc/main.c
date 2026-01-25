@@ -1,16 +1,81 @@
 #include "can.h"
+#include "can_bus.h"
 #include "clock.h"
 #include "eth.h"
 #include "gpio.h"
 #include "i2c.h"
-#include "mpu6050.h"
+#include "obc_config.h"
 #include "uart.h"
 #include "stm32f767xx.h"
-
 #include <stdbool.h>
 
-int main(void) {
-    // Setup LEDs
+static struct {
+    uint8_t mode;
+    uint8_t error_flags;
+} obc_state = {
+    .mode = OBC_MODE_IDLE,
+    .error_flags = 0
+};
+
+static struct {
+    uint32_t heartbeat;
+    uint32_t eth_check;
+} last_run = {0};
+
+static struct {
+    uint32_t last_adcs_heartbeat;
+    uint32_t last_eps_heartbeat;
+} subsystem_health = {0};
+
+static void task_obc_heartbeat(uint32_t now) {
+    struct can_bus_obc_heartbeat_t heartbeat = {
+        .uptime_ms = now,
+        .mode = obc_state.mode,
+        .error_flags = obc_state.error_flags
+    };
+
+    uint8_t data[CAN_BUS_OBC_HEARTBEAT_LENGTH];
+    can_bus_obc_heartbeat_pack(data, &heartbeat, sizeof(data));
+    can_transmit(CAN_BUS_OBC_HEARTBEAT_FRAME_ID, data, CAN_BUS_OBC_HEARTBEAT_LENGTH);
+}
+
+static void task_eth_status(void) {
+    if (eth_get_link_status()) {
+        GPIOB->ODR |= (1 << 7);
+        GPIOB->ODR &= ~(1 << 14);
+    } else {
+        GPIOB->ODR &= ~(1 << 7);
+        GPIOB->ODR |= (1 << 14);
+    }
+}
+
+static void task_can_rx(void) {
+    uint32_t id;
+    uint8_t data[8];
+    uint8_t len;
+    
+    while (can_receive(&id, data, &len)) {
+        switch (id) {
+            case CAN_BUS_ADCS_HEARTBEAT_FRAME_ID: {
+                struct can_bus_adcs_heartbeat_t msg;
+                can_bus_adcs_heartbeat_unpack(&msg, data, len);
+                subsystem_health.last_adcs_heartbeat = clock_get_ms();
+                obc_state.error_flags &= ~ERR_ADCS_TIMEOUT;
+                break;
+            }
+
+            case CAN_BUS_EPS_HEARTBEAT_FRAME_ID: {
+                struct can_bus_eps_heartbeat_t msg;
+                can_bus_eps_heartbeat_unpack(&msg, data, len);
+                subsystem_health.last_eps_heartbeat = clock_get_ms();
+                obc_state.error_flags &= ~ERR_EPS_TIMEOUT;
+                break;
+            }
+        }
+    }
+}
+
+static void obc_init(void) {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
     GPIOB->MODER |= (1 << 14) | (1 << 28);
 
@@ -24,49 +89,38 @@ int main(void) {
     can_init();
     eth_init();
 
-    if (mpu6050_init()) {
-        uart_print_str("MPU6050 OK\r\n");
-    } else {
-        uart_print_str("MPU6050 FAIL\r\n");
-    }
-    
-    // uint8_t counter = 0;
-    mpu6050_data_t imu_data;
+    uint32_t now = clock_get_ms();
+    subsystem_health.last_adcs_heartbeat = now;
+    subsystem_health.last_eps_heartbeat = now;
+}
+
+int main(void) {
+    obc_init();
 
     while (1) {
-        // uint8_t can_data[8] = {counter++, 0, 0, 0, 0, 0, 0, 0};
-        // can_transmit(0x100, can_data, 1);
-        // led_toggle();
+        uint32_t now = clock_get_ms();
 
-        if (eth_get_link_status()) {
-            GPIOB->ODR |= (1 << 7);   // Blue LED on
-            GPIOB->ODR &= ~(1 << 14); // Red LED off
-        } else {
-            GPIOB->ODR &= ~(1 << 7); // Blue LED off
-            GPIOB->ODR |= (1 << 14); // Red LED on
+        // Ethernet status @ 10 Hz
+        if (now - last_run.eth_check >= ETH_CHECK_INTERVAL_MS) {
+            task_eth_status();
+            last_run.eth_check = now;
         }
 
-        mpu6050_read_all(&imu_data);
+        // Heartbeats @ 1 Hz
+        if (now - last_run.heartbeat >= OBC_HEARTBEAT_INTERVAL_MS) {
+            task_obc_heartbeat(now);
+            last_run.heartbeat = now;
+        }
 
-        uint32_t ts = clock_get_ms();
-        
-        uart_print_uint32(ts);
-        uart_send_char(',');
-        uart_print_float(imu_data.accel_x, 2);
-        uart_send_char(',');
-        uart_print_float(imu_data.accel_y, 2);
-        uart_send_char(',');
-        uart_print_float(imu_data.accel_z, 2);
-        uart_send_char(',');
-        uart_print_float(imu_data.temp, 2);
-        uart_send_char(',');
-        uart_print_float(imu_data.gyro_x, 2);
-        uart_send_char(',');
-        uart_print_float(imu_data.gyro_y, 2);
-        uart_send_char(',');
-        uart_print_float(imu_data.gyro_z, 2);
-        uart_print_str("\r\n");
-        
-        for (volatile int i = 0; i < 2000000; i++);
+        // Every loop (non-blocking)
+        task_can_rx();
+
+        if (now - subsystem_health.last_adcs_heartbeat > OBC_HEARTBEAT_TIMEOUT_MS) {
+            obc_state.error_flags |= ERR_ADCS_TIMEOUT;
+        }
+
+        if (now - subsystem_health.last_eps_heartbeat > OBC_HEARTBEAT_TIMEOUT_MS) {
+            obc_state.error_flags |= ERR_EPS_TIMEOUT;
+        }
     }
 }

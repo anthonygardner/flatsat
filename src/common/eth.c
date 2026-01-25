@@ -2,6 +2,20 @@
 #include "uart.h"
 #include "stm32f767xx.h"
 
+struct {
+    uint32_t status;    // RDES0
+    uint32_t buff_len;  // RDES1
+    uint32_t buff_addr; // RDES2
+    uint32_t next_addr; // RDES3
+} eth_rx_descriptor_t;
+
+struct {
+    uint32_t status;    // TDES0
+    uint32_t buff_len;  // TDES1
+    uint32_t buff_addr; // TDES2
+    uint32_t next_addr; // TDES3
+} eth_tx_descriptor_t;
+
 static void eth_enable_clocks(void) {
     // Enable GPIO port clocks for reduced media independent interface (RMII) pins...
     // REF_CLK => PA1

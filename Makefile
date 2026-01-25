@@ -27,25 +27,28 @@ build/adcs/firmware.bin: build/adcs/firmware.elf
 
 adcs: build/adcs/firmware.bin
 
-build/pms/firmware.elf: src/pms/main.c $(COMMON_SRC)
-	@mkdir -p build/pms
+build/eps/firmware.elf: src/eps/main.c $(COMMON_SRC)
+	@mkdir -p build/eps
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
-build/pms/firmware.bin: build/pms/firmware.elf
+build/eps/firmware.bin: build/eps/firmware.elf
 	$(OBJCOPY) -O binary $< $@
 
-pms: build/pms/firmware.bin
+eps: build/eps/firmware.bin
 
 flash_obc: obc
-	st-flash --serial 0666FF555567894967085233 write build/obc/firmware.bin 0x8000000
+	st-flash --serial 066EFF485682884967134955 write build/obc/firmware.bin 0x8000000
 
 flash_adcs: adcs
-	st-flash --serial 066CFF555567894967085254 write build/adcs/firmware.bin 0x8000000
+	st-flash --serial 0666FF555567894967085233 write build/adcs/firmware.bin 0x8000000
 
-flash_pms: pms
-	st-flash --serial 066EFF485682884967134955 write build/pms/firmware.bin 0x8000000
+flash_eps: eps
+	st-flash --serial 066CFF555567894967085254 write build/eps/firmware.bin 0x8000000
 
 clean:
 	rm -fr build/
 
-.PHONY: obc adcs pms flash_obc flash_adcs flash_pms clean
+can:
+	uv run cantools generate_c_source can_bus.dbc -o src/common/
+
+.PHONY: obc adcs eps flash_obc flash_adcs flash_eps clean can

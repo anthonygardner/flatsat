@@ -36,7 +36,7 @@ void can_init(void) {
     // 500000 = 16000000 / (2 * (1 + 13 + 2))
     // Prescaler = 2, BS1 = 13, BS2 = 2, SJW = 1
     CAN1->BTR = 0;
-    CAN1->BTR |= (2 - 1) << CAN_BTR_BRP_Pos;
+    CAN1->BTR |= (6 - 1) << CAN_BTR_BRP_Pos;
     CAN1->BTR |= (13 - 1) << CAN_BTR_TS1_Pos;
     CAN1->BTR |= (2 - 1) << CAN_BTR_TS2_Pos;
     CAN1->BTR |= (1 - 1) << CAN_BTR_SJW_Pos;
@@ -82,8 +82,15 @@ int can_receive(uint32_t *id, uint8_t *data, uint8_t *len) {
 }
 
 void can_transmit(uint32_t id, uint8_t *data, uint8_t len) {
+    uint32_t timeout = 100000;
+
     // Wait for empty mailbox
-    while (!(CAN1->TSR & CAN_TSR_TME0));
+    while (!(CAN1->TSR & CAN_TSR_TME0)) {
+        if (--timeout == 0) {
+            // Mailbox never freed - no ACK received
+            return;
+        }
+    };
     
     // Set ID
     CAN1->sTxMailBox[0].TIR = (id << CAN_TI0R_STID_Pos);
