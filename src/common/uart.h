@@ -21,4 +21,6 @@ void uart_print_float(float val, int dec);
 
 void uart_print_str(const char* s);
 
+void uart_print_char(char c);
+
 #endif

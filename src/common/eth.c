@@ -1,20 +1,81 @@
 #include "eth.h"
 #include "uart.h"
 #include "stm32f767xx.h"
+#include <stdbool.h>
+#include <string.h>
 
-struct {
+#define ETH_RX_BUFFER_SIZE 1524
+#define ETH_RX_DESC_COUNT 4  // Increase if code is slow to process
+
+typedef struct {
     uint32_t status;    // RDES0
-    uint32_t buff_len;  // RDES1
-    uint32_t buff_addr; // RDES2
+    uint32_t buf_len;   // RDES1
+    uint32_t buf_addr;  // RDES2
     uint32_t next_addr; // RDES3
 } eth_rx_descriptor_t;
 
-struct {
+typedef struct {
     uint32_t status;    // TDES0
-    uint32_t buff_len;  // TDES1
-    uint32_t buff_addr; // TDES2
+    uint32_t buf_len;   // TDES1
+    uint32_t buf_addr;  // TDES2
     uint32_t next_addr; // TDES3
 } eth_tx_descriptor_t;
+
+typedef struct {
+    uint32_t status;
+    uint32_t buf_len;
+    uint32_t buf_addr;
+    uint32_t next_addr;
+} eth_dma_descriptor_t;
+
+// Track which descriptor to check next
+static uint32_t eth_rx_idx = 0;
+
+// Ethernet DMA requires buffers and descriptors to be word-aligned
+// Values need to be placed at a memory address that is divisible by 4
+static uint8_t eth_rx_buffers[ETH_RX_DESC_COUNT][ETH_RX_BUFFER_SIZE] __attribute__((aligned(4)));
+static eth_dma_descriptor_t eth_rx_descriptors[ETH_RX_DESC_COUNT] __attribute__((aligned(4)));
+
+static void eth_init_rx_descriptors(void) {
+    for (int i = 0; i < ETH_RX_DESC_COUNT; i++) {
+        eth_rx_descriptors[i].buf_addr = (uint32_t)eth_rx_buffers[i];
+
+        eth_rx_descriptors[i].next_addr = (uint32_t)&eth_rx_descriptors[(i + 1) % ETH_RX_DESC_COUNT];
+
+        // Tell DMA to follow the next_addr pointer to the next descriptor
+        eth_rx_descriptors[i].buf_len = ETH_RX_BUFFER_SIZE | (1 << 14);
+
+        eth_rx_descriptors[i].status = (1 << 31);
+    }
+
+    // Tell DMA where the descriptor list starts
+    ETH->DMARDLAR = (uint32_t)&eth_rx_descriptors[0];
+}
+
+bool eth_receive(uint8_t *buffer, uint16_t *length) {
+    // Check if current descriptor is owned by software
+    if (eth_rx_descriptors[eth_rx_idx].status & (1 << 31)) {
+        // Hardware still owns, no frame ready
+        return false;
+    }
+
+    // Read frame length from status register
+    uint16_t frame_length = (eth_rx_descriptors[eth_rx_idx].status >> 16) & 0x3FFF;
+
+    // Copy data from Ethernet driver's internal buffer to wherever the caller wants it
+    memcpy(buffer, (uint8_t *)eth_rx_descriptors[eth_rx_idx].buf_addr, frame_length);
+    
+    // Tell the caller how many bytes we copied
+    *length = frame_length;
+
+    // Give the descriptor back to the hardware
+    eth_rx_descriptors[eth_rx_idx].status = (1 << 31);
+
+    // Advance to the next descriptor
+    eth_rx_idx = (eth_rx_idx + 1) % ETH_RX_DESC_COUNT;
+
+    return true;
+}
 
 static void eth_enable_clocks(void) {
     // Enable GPIO port clocks for reduced media independent interface (RMII) pins...
@@ -171,7 +232,20 @@ void eth_init(void) {
     eth_enable_clocks();
     eth_configure_pins();
     eth_reset_mac();
+    eth_init_rx_descriptors();
+
+    // Set 100 Mbps and full duplex
+    ETH->MACCR |= (1 << 14) | (1 << 11);
+
+    // Accept all frames
+    ETH->MACFFR |= (1 << 0);
+
+    // Poll until MAC is ready
+    while (ETH->MACMIIAR & ETH_MACMIIAR_MB);
+
+    // Enable MAC receiver
+    ETH->MACCR |= ETH_MACCR_RE;
     
-    uint32_t phy_id = eth_read_phy_id();
-    uart_print_hex(phy_id);
+    // Enable DMA receive
+    ETH->DMAOMR |= ETH_DMAOMR_SR;
 }

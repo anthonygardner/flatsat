@@ -15,7 +15,7 @@
 // Error flags
 #define ERR_ADCS_TIMEOUT    (1 << 0)
 #define ERR_EPS_TIMEOUT     (1 << 1)
-#define ERR_CAN_ERROR       (1 << 2)
+#define ERR_CAN_FAULT       (1 << 2)
 #define ERR_ETH_DOWN        (1 << 3)
 
 #endif

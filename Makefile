@@ -43,7 +43,7 @@ flash_adcs: adcs
 	st-flash --serial 0666FF555567894967085233 write build/adcs/firmware.bin 0x8000000
 
 flash_eps: eps
-	st-flash --serial 066CFF555567894967085254 write build/eps/firmware.bin 0x8000000
+	st-flash --serial 0670FF565271525067083435 write build/eps/firmware.bin 0x8000000
 
 clean:
 	rm -fr build/

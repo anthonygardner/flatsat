@@ -63,16 +63,6 @@ static void task_adcs_heartbeat(uint32_t now) {
     can_transmit(CAN_BUS_ADCS_HEARTBEAT_FRAME_ID, data, CAN_BUS_ADCS_HEARTBEAT_LENGTH);
 }
 
-static void task_eth_status(void) {
-    if (eth_get_link_status()) {
-        GPIOB->ODR |= (1 << 7);
-        GPIOB->ODR &= ~(1 << 14);
-    } else {
-        GPIOB->ODR &= ~(1 << 7);
-        GPIOB->ODR |= (1 << 14);
-    }
-}
-
 static void task_imu_read(void) {
     mpu6050_data_t raw;
 
@@ -118,9 +108,11 @@ static void task_motor_control(void) {
         pwm_set_duty(0);
         return;
     }
-    
+
+    uint16_t scaled_duty = (motor.cmd_duty_cycle * 1079) / 100;
+
     if (adcs_state.mode == ADCS_MODE_OPEN_LOOP) {
-        pwm_set_duty(motor.cmd_duty_cycle);
+        pwm_set_duty(scaled_duty);
     } else if (adcs_state.mode == ADCS_MODE_CLOSED_LOOP) {
         // TODO(acg): Use PID controller from ccl
         // float error = motor.cmd_rpm - motor.actual_rpm;
@@ -202,6 +194,7 @@ static void task_can_rx(void) {
             case CAN_BUS_ADCS_MOTOR_CMD_FRAME_ID: {
                 struct can_bus_adcs_motor_cmd_t msg;
                 can_bus_adcs_motor_cmd_unpack(&msg, data, len);
+                adcs_state.mode = ADCS_MODE_OPEN_LOOP;
                 motor.cmd_duty_cycle = msg.duty_cycle;
                 motor.cmd_enable = msg.enable;
                 break;
@@ -221,13 +214,18 @@ static void adcs_init(void) {
     uart_init();
     i2c_init();
     can_init();
-    eth_init();
-    // pwm_init();
+    pwm_init();
+
+    gpio_motor_init();
+    gpio_motor_forward();
+
+    pwm_set_duty(0);
+
     // motor_encoder_init();
 
-    if (!mpu6050_init()) {
-        adcs_state.error_flags |= ERR_IMU_FAULT;
-    }
+    // if (!mpu6050_init()) {
+    //     adcs_state.error_flags |= ERR_IMU_FAULT;
+    // }
 
     uint32_t now = clock_get_ms();
     subsystem_health.last_obc_heartbeat = now;
@@ -237,30 +235,24 @@ int main(void) {
     adcs_init();
 
     while (1) {
-        int32_t now = clock_get_ms();
+        uint32_t now = clock_get_ms();
 
         // IMU read @ 100 Hz
-        if (now - last_run.imu_read >= IMU_READ_INTERVAL_MS) {
-            task_imu_read();
-            task_attitude_update();
-            last_run.imu_read = now;
-        }
-        
-        // Motor control @ 100 Hz
-        // if (now - last_run.motor_control >= MOTOR_CONTROL_INTERVAL_MS) {
-        //     task_motor_control();
-        //     last_run.motor_control = now;
+        // if (now - last_run.imu_read >= IMU_READ_INTERVAL_MS) {
+        //     task_imu_read();
+        //     task_attitude_update();
+        //     last_run.imu_read = now;
         // }
         
-        // Ethernet status @ 10 Hz
-        if (now - last_run.eth_check >= ETH_CHECK_INTERVAL_MS) {
-            task_eth_status();
-            last_run.eth_check = now;
+        // Motor control @ 100 Hz
+        if (now - last_run.motor_control >= MOTOR_CONTROL_INTERVAL_MS) {
+            task_motor_control();
+            last_run.motor_control = now;
         }
 
         // Heartbeat @ 1 Hz
         if (now - last_run.heartbeat >= ADCS_HEARTBEAT_INTERVAL_MS) {
-            task_heartbeat(now);
+            task_adcs_heartbeat(now);
             last_run.heartbeat = now;
         }
         
@@ -268,7 +260,9 @@ int main(void) {
         task_can_rx();
 
         if (now - subsystem_health.last_obc_heartbeat > ADCS_HEARTBEAT_TIMEOUT_MS) {
-            adcs_state.error_flags |= ERR_OBC_TIMEOUT;
+            adcs_state.error_flags |= ERR_ADCS_TIMEOUT;
         }
     }
+
+    return 0;
 }

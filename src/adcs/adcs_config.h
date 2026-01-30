@@ -20,7 +20,8 @@
 // Error flags
 #define ERR_IMU_FAULT      (1 << 0)
 #define ERR_MOTOR_FAULT    (1 << 1)
-#define ERR_CAN_ERROR      (1 << 2)
-#define ERR_OBC_TIMEOUT    (1 << 3)
+#define ERR_CAN_FAULT      (1 << 2)
+#define ERR_ADCS_TIMEOUT   (1 << 3)
+#define ERR_OBC_TIMEOUT    (1 << 4)
 
 #endif

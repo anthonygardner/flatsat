@@ -12,6 +12,11 @@ static void uart_configure_pins(void) {
     GPIOD->MODER |= (0b10 << 16);
     GPIOD->OSPEEDR |= (0b10 << 16);
     GPIOD->AFR[1] |= (7 << 0);
+
+    // PD9: RX
+    GPIOD->MODER &= ~(0b11 << 18);
+    GPIOD->MODER |= (0b10 << 18);
+    GPIOD->AFR[1] |= (7 << 4);
 };
 
 void uart_send_char(char c) {
@@ -100,6 +105,11 @@ void uart_print_str(const char* s) {
     }
 }
 
+void uart_print_char(char c) {
+    while (!(USART3->ISR & (1 << 7)));  // Wait for TXE
+    USART3->TDR = c;
+}
+
 void uart_init(void) {
     uart_enable_clocks();
     uart_configure_pins();
@@ -107,6 +117,6 @@ void uart_init(void) {
     // Configure baud rate (48 MHz / 115200)
     USART3->BRR = 417;
 
-    // Enable transmitter, receiver, and USART3
+    // Enable USART3, RX, TX
     USART3->CR1 |= (1 << 0) | (1 << 2) | (1 << 3);
 }

@@ -1,5 +1,9 @@
 #include "can.h"
+#include "clock.h"
 #include "stm32f767xx.h"
+#include <stdbool.h>
+
+#define CAN_TX_TIMEOUT_MS 10
 
 void can_init(void) {
     // Enable GPIOD clock
@@ -57,9 +61,9 @@ void can_init(void) {
     CAN1->FMR &= ~CAN_FMR_FINIT;
 }
 
-int can_receive(uint32_t *id, uint8_t *data, uint8_t *len) {
+bool can_receive(uint32_t *id, uint8_t *data, uint8_t *len) {
     if (!(CAN1->RF0R & CAN_RF0R_FMP0)) {
-        return 0;
+        return false;
     }
     
     *id = (CAN1->sFIFOMailBox[0].RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
@@ -78,17 +82,16 @@ int can_receive(uint32_t *id, uint8_t *data, uint8_t *len) {
     
     CAN1->RF0R |= CAN_RF0R_RFOM0;
     
-    return 1;
+    return true;
 }
 
-void can_transmit(uint32_t id, uint8_t *data, uint8_t len) {
-    uint32_t timeout = 100000;
-
+bool can_transmit(uint32_t id, uint8_t *data, uint8_t len) {
     // Wait for empty mailbox
+    uint32_t start = clock_get_ms();
     while (!(CAN1->TSR & CAN_TSR_TME0)) {
-        if (--timeout == 0) {
+        if (clock_get_ms() - start > CAN_TX_TIMEOUT_MS) {
             // Mailbox never freed - no ACK received
-            return;
+            return false;
         }
     };
     
@@ -106,4 +109,6 @@ void can_transmit(uint32_t id, uint8_t *data, uint8_t len) {
     
     // Request transmission
     CAN1->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
+
+    return true;
 }
