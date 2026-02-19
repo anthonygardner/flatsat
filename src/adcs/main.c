@@ -21,7 +21,7 @@ static struct {
 static struct {
     uint16_t cmd_duty_cycle;
     uint8_t cmd_enable;
-    uint16_t actual_rpm;
+    int16_t rpm;
     float current;
     uint8_t fault;
 } motor = {0};
@@ -115,14 +115,18 @@ static void task_motor_control(void) {
         pwm_set_duty(scaled_duty);
     } else if (adcs_state.mode == ADCS_MODE_CLOSED_LOOP) {
         // TODO(acg): Use PID controller from ccl
-        // float error = motor.cmd_rpm - motor.actual_rpm;
+        // float error = motor.cmd_rpm - motor.rpm;
         // float output = pid_update(&motor_pid, error);
         // pwm_set_duty((uint16_t)output);
     }
     
-    // TODO: Read encoder
-    // motor.actual_rpm = motor_encoder_get_rpm();
-    
+    // Read encoder
+    motor.rpm = gpio_motor_get_rpm();
+
+    uart_print_str("RPM = ");
+    uart_print_int(motor.rpm);
+    uart_print_str("\r\n");
+
     // TODO: Read current sensor
 }
 
@@ -140,7 +144,7 @@ static void task_attitude_tx(void) {
 
 static void task_motor_status_tx(void) {
     struct can_bus_adcs_motor_status_t msg = {
-        .rpm = motor.actual_rpm,
+        .rpm = motor.rpm,
         .current = (uint16_t)(motor.current * 100),  // Scale for 0.01 factor
         .fault = motor.fault
     };
@@ -233,6 +237,8 @@ static void adcs_init(void) {
 
 int main(void) {
     adcs_init();
+
+    int16_t last_rpm = 0;
 
     while (1) {
         uint32_t now = clock_get_ms();
