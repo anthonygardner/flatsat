@@ -1,0 +1,3 @@
+[submodule "lib/ccl"]
+	path = lib/ccl
+	url = https://github.com/anthonygardner/ccl.git

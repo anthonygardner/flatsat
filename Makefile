@@ -3,15 +3,16 @@ OBJCOPY = arm-none-eabi-objcopy
 
 CFLAGS = -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard
 CFLAGS += -Wall -O2 -g
-CFLAGS += -Iinclude -Iinclude/cmsis -Isrc/common
+CFLAGS += -Iinclude -Iinclude/cmsis -Isrc/common -Ilib/ccl/core/include
 
 LDFLAGS = -Tstm32f767.ld -nostartfiles
 
 COMMON_SRC = $(wildcard src/common/*.c)
+CCL_SRC = $(wildcard lib/ccl/core/src/*.c)
 
 build/obc/firmware.elf: src/obc/main.c $(COMMON_SRC)
 	@mkdir -p build/obc
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(CCL_SRC) $^ -o $@
 
 build/obc/firmware.bin: build/obc/firmware.elf
 	$(OBJCOPY) -O binary $< $@
@@ -20,7 +21,7 @@ obc: build/obc/firmware.bin
 
 build/adcs/firmware.elf: src/adcs/main.c $(COMMON_SRC)
 	@mkdir -p build/adcs
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(CCL_SRC) $^ -o $@
 
 build/adcs/firmware.bin: build/adcs/firmware.elf
 	$(OBJCOPY) -O binary $< $@
@@ -29,7 +30,7 @@ adcs: build/adcs/firmware.bin
 
 build/eps/firmware.elf: src/eps/main.c $(COMMON_SRC)
 	@mkdir -p build/eps
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(CCL_SRC) $^ -o $@
 
 build/eps/firmware.bin: build/eps/firmware.elf
 	$(OBJCOPY) -O binary $< $@
