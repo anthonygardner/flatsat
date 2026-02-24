@@ -6,7 +6,7 @@ This project implements a distributed satellite subsystem architecture using thr
 
 - **Onboard computer (OBC)** - Distributes local CAN traffic between nodes and forwards IMU telemetry to the GCS
 
-- **Attitude determination and control system (ADCS)** - Runs an open feedback loop to actuate a geared DC motor in response to motor commands sent from the GCS
+- **Attitude determination and control system (ADCS)** - Runs an open feedback loop to actuate a geared DC motor in response to motor commands sent from the GCS as Ethernet packets
 
 - **Electronic power system (EPS)** - Cycles through LED relays wired in series and in parallel to demonstrate power distribution with fault tolerance using normally open (NO) and normally closed (NC) circuits
 
