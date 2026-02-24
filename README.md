@@ -25,6 +25,7 @@ graph TD
     ADCS["Nucleo 2 (ADCS)"] -->|CAN| CT2[CAN Transceiver 2]
     ADCS -->|I2C| MPU[MPU6050]
     ADCS -->|PWM| Motor[DC Motor]
+    Motor -->|GPIO| ADCS
 
     EPS -->|CAN| CT3[CAN Transceiver 3]
     EPS["Nucleo 3 (EPS)"] -->|GPIO| Relay[Relay Module]
