@@ -15,10 +15,11 @@ This project implements a distributed satellite subsystem architecture using thr
 ```mermaid
 graph TD
     Laptop -->|Ethernet| PoE[PoE Switch]
-    RPi["Raspberry Pi (GCS)"] --> |Ethernet| PoE
+    RPi["Raspberry Pi (GCS)"] -.-> |Ethernet| PoE
 
-    RPi -->|UART| OBC["Nucleo 1 (OBC)"]
+    Laptop -->|SSH| RPi
 
+    RPi -->|Ethernet| OBC["Nucleo 1 (OBC)"]
     OBC -->|CAN| CT1[CAN Transceiver 1]
 
     ADCS["Nucleo 2 (ADCS)"] -->|CAN| CT2[CAN Transceiver 2]
